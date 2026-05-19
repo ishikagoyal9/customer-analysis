@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Churn Predictor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    padding: 30px 16px 60px;
+    color: #1a2a4a;
+    background-image: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=80&fit=crop&crop=center');
+    background-size: cover;
+    background-position: 20000% cnter;
+    background-attachment: fixed;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 30, 80, 0.72);
+    z-index: 0;
+  }
+
+  h1, p, .card { position: relative; z-index: 1; }
+
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 6px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 12px rgba(0,80,255,0.4);
+  }
+
+  
+
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    max-width: 720px;
+    margin: 0 auto;
+    box-shadow: 0 8px 40px rgba(0,40,120,0.35);
+    overflow: hidden;
+    border: 1px solid #dce8ff;
+  }
+
+  .card-body { padding: 28px; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff;
+    background: linear-gradient(90deg, #1a56db, #3b82f6);
+    padding: 7px 14px;
+    border-radius: 5px;
+    margin: 24px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  @media (max-width: 500px) {
+    .row, .row-3 { grid-template-columns: 1fr; }
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: #4a6fa5;
+    margin-bottom: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #c8d8f0;
+    border-radius: 7px;
+    font-size: 14px;
+    outline: none;
+    background: #f4f8ff;
+    color: #1a2a4a;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: #1a56db;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+  }
+
+  .checks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 500px) { .checks { grid-template-columns: 1fr 1fr; } }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px 10px;
+    border: 1.5px solid #c8d8f0;
+    border-radius: 7px;
+    background: #f4f8ff;
+    color: #1a2a4a;
+    user-select: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  }
+
+  .check-item input[type=checkbox] { accent-color: #1a56db; width: 14px; height: 14px; }
+  .check-item:has(input:checked) {
+    border-color: #1a56db;
+    background: #e8f0ff;
+    box-shadow: 0 0 0 2px rgba(26,86,219,0.08);
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #1a56db, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 24px;
+    transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .btn:hover {
+    opacity: 0.93;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(26,86,219,0.35);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .result {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .result.churn { background: #fff5f5; border: 1.5px solid #ffbbbb; }
+  .result.stay  { background: #f0f9ff; border: 1.5px solid #93c5fd; }
+
+  .result .emoji  { font-size: 38px; margin-bottom: 8px; }
+  .result .verdict { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+  .result.churn .verdict { color: #dc2626; }
+  .result.stay  .verdict { color: #1a56db; }
+  .result .note  { font-size: 13px; color: #666; margin-bottom: 16px; }
+
+  .bars { text-align: left; }
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #4a6fa5; font-weight: 600; }
+  .bar-track { height: 10px; background: #e8f0ff; border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; width: 0; transition: width 0.8s ease; }
+  .bar-fill.stay  { background: linear-gradient(90deg, #1a56db, #60a5fa); }
+  .bar-fill.churn { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+  .error {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fff5f5;
+    border: 1px solid #ffaaaa;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #dc2626;
+  }
+</style>
+</head>
+<body>
+
+<h1>📊 Customer Churn Predictor</h1>
+
+
+<div class="card">
+
+  <div class="card-body">
+
+    <div class="section-title">👤 Customer Details</div>
+    <div class="row row-3">
+      <div class="field">
+        <label>Gender</label>
+        <select id="gender">
+          <option value="1">Male</option>
+          <option value="0">Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Senior Citizen</label>
+        <select id="SeniorCitizen">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tenure (months)</label>
+        <input type="number" id="tenure" value="12" min="0" max="72">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Monthly Charges (₹)</label>
+        <input type="number" id="MonthlyCharges" value="65.50" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>Total Charges (₹)</label>
+        <input type="number" id="TotalCharges" value="786" step="0.01" min="0">
+      </div>
+    </div>
+
+    <div class="section-title">📶 Plan Details</div>
+    <div class="row row-3">
+      <div class="field">
+        <label>Internet Service</label>
+        <select id="InternetService">
+          <option value="DSL">DSL</option>
+          <option value="Fiber optic">Fiber Optic</option>
+          <option value="No">No Internet</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contract</label>
+        <select id="Contract">
+          <option value="Month-to-month">Month-to-Month</option>
+          <option value="One year">One Year</option>
+          <option value="Two year">Two Year</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Payment Method</label>
+        <select id="PaymentMethod">
+          <option value="Electronic check">Electronic Check</option>
+          <option value="Mailed check">Mailed Check</option>
+          <option value="Bank transfer (automatic)">Bank Transfer</option>
+          <option value="Credit card (automatic)">Credit Card</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">🛠️ Services (tick jo applicable ho)</div>
+    <div class="checks">
+      <label class="check-item"><input type="checkbox" id="Partner"> Partner</label>
+      <label class="check-item"><input type="checkbox" id="Dependents"> Dependents</label>
+      <label class="check-item"><input type="checkbox" id="PhoneService" checked> Phone Service</label>
+      <label class="check-item"><input type="checkbox" id="MultipleLines"> Multiple Lines</label>
+      <label class="check-item"><input type="checkbox" id="OnlineSecurity"> Online Security</label>
+      <label class="check-item"><input type="checkbox" id="OnlineBackup"> Online Backup</label>
+      <label class="check-item"><input type="checkbox" id="DeviceProtection"> Device Protection</label>
+      <label class="check-item"><input type="checkbox" id="TechSupport"> Tech Support</label>
+      <label class="check-item"><input type="checkbox" id="StreamingTV"> Streaming TV</label>
+      <label class="check-item"><input type="checkbox" id="StreamingMovies"> Streaming Movies</label>
+      <label class="check-item"><input type="checkbox" id="PaperlessBilling"> Paperless Billing</label>
+    </div>
+
+    <button class="btn" id="predictBtn" onclick="predict()">🔍 Predict Churn</button>
+
+    <div class="error" id="errorMsg"></div>
+
+    <div class="result" id="result">
+      <div class="emoji" id="emoji"></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="note" id="note"></div>
+      <div class="bars">
+        <div class="bar-row">
+          <div class="bar-label"><span>Will Stay</span><span id="pStay">—</span></div>
+          <div class="bar-track"><div class="bar-fill stay" id="bStay"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span>Will Churn</span><span id="pChurn">—</span></div>
+          <div class="bar-track"><div class="bar-fill churn" id="bChurn"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+async function predict() {
+  const btn = document.getElementById('predictBtn');
+  const err = document.getElementById('errorMsg');
+  const res = document.getElementById('result');
+
+  btn.disabled = true;
+  btn.textContent = 'Predicting...';
+  err.style.display = 'none';
+  res.style.display = 'none';
+
+  const data = {
+    gender:           document.getElementById('gender').value,
+    SeniorCitizen:    document.getElementById('SeniorCitizen').value,
+    tenure:           document.getElementById('tenure').value,
+    MonthlyCharges:   document.getElementById('MonthlyCharges').value,
+    TotalCharges:     document.getElementById('TotalCharges').value,
+    InternetService:  document.getElementById('InternetService').value,
+    Contract:         document.getElementById('Contract').value,
+    PaymentMethod:    document.getElementById('PaymentMethod').value,
+    Partner:          document.getElementById('Partner').checked ? 1 : 0,
+    Dependents:       document.getElementById('Dependents').checked ? 1 : 0,
+    PhoneService:     document.getElementById('PhoneService').checked ? 1 : 0,
+    MultipleLines:    document.getElementById('MultipleLines').checked ? 1 : 0,
+    OnlineSecurity:   document.getElementById('OnlineSecurity').checked ? 1 : 0,
+    OnlineBackup:     document.getElementById('OnlineBackup').checked ? 1 : 0,
+    DeviceProtection: document.getElementById('DeviceProtection').checked ? 1 : 0,
+    TechSupport:      document.getElementById('TechSupport').checked ? 1 : 0,
+    StreamingTV:      document.getElementById('StreamingTV').checked ? 1 : 0,
+    StreamingMovies:  document.getElementById('StreamingMovies').checked ? 1 : 0,
+    PaperlessBilling: document.getElementById('PaperlessBilling').checked ? 1 : 0,
+  };
+
+  try {
+    const r = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const j = await r.json();
+    if (!j.success) throw new Error(j.error);
+
+    const isChurn = j.churn === 1;
+    res.className = 'result ' + (isChurn ? 'churn' : 'stay');
+    document.getElementById('emoji').textContent   = isChurn ? '⚠️' : '✅';
+    document.getElementById('verdict').textContent = isChurn ? 'Customer likely to CHURN' : 'Customer likely to STAY';
+    document.getElementById('note').textContent    = isChurn
+      ? 'Consider offering a retention discount or plan upgrade.'
+      : 'Low churn risk. Customer appears satisfied.';
+
+    document.getElementById('pStay').textContent  = j.prob_stay + '%';
+    document.getElementById('pChurn').textContent = j.prob_churn + '%';
+    res.style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('bStay').style.width  = j.prob_stay + '%';
+      document.getElementById('bChurn').style.width = j.prob_churn + '%';
+    }, 50);
+
+  } catch(e) {
+    err.textContent = 'Error: ' + e.message;
+    err.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🔍 Predict Churn';
+}
+</script>
+
+</body>
+</html>
